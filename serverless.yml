@@ -4,6 +4,7 @@ frameworkVersion: "3"
 
 custom:
     domainName: ${self:service}-${self:provider.stage}.${self:custom.hostedZone}
+    domainNameRegional: ${self:service}-${self:provider.stage}-${self:provider.region}.${self:custom.hostedZone}
     hostedZone: "matthewcomins.com"
 
 plugins:

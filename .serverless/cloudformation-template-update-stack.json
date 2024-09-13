@@ -1,0 +1,13 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {},
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": "app-stg-us-east-1-deployment-bucket",
+      "Export": {
+        "Name": "sls-app-stg-ServerlessDeploymentBucketName"
+      }
+    }
+  }
+}

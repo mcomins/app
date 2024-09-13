@@ -35,3 +35,6 @@ provider:
     stackTags:
         SERVICE: ${self:service}
         STAGE: ${self:provider.stage}
+
+functions:
+    - ${file(infrastructure/lambda-functions.yml)}

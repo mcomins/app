@@ -1,0 +1,81 @@
+{
+  "service": {
+    "service": "app",
+    "serviceObject": {
+      "name": "app"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "architecture": "arm64",
+      "logRetentionInDays": 14,
+      "region": "us-east-1",
+      "stage": "stg",
+      "stackName": "app-stg",
+      "deploymentBucket": "app-stg-us-east-1-deployment-bucket",
+      "environment": {
+        "DOMAIN_NAME": "app-stg.matthewcomins.com",
+        "HOSTED_ZONE": "matthewcomins.com"
+      },
+      "httpApi": {
+        "disableDefaultEndpoint": false,
+        "payload": "1.0"
+      },
+      "stackTags": {
+        "SERVICE": "app",
+        "STAGE": "stg"
+      },
+      "versionFunctions": true,
+      "deploymentBucketObject": {
+        "name": "app-stg-us-east-1-deployment-bucket",
+        "serverSideEncryption": "AES256"
+      },
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {},
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "app-stg-us-east-1-deployment-bucket",
+            "Export": {
+              "Name": "sls-app-stg-ServerlessDeploymentBucketName"
+            }
+          }
+        }
+      }
+    },
+    "custom": {
+      "domainName": "app-stg.matthewcomins.com",
+      "domainNameRegional": "app-stg-us-east-1.matthewcomins.com",
+      "hostedZone": "matthewcomins.com"
+    },
+    "plugins": [
+      "serverless-deployment-bucket",
+      "serverless-build-client"
+    ],
+    "pluginsData": {},
+    "functions": {},
+    "configValidationMode": "off",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "service": "app",
+      "configValidationMode": "off",
+      "frameworkVersion": "3",
+      "custom": {
+        "$ref": "$[\"service\"][\"custom\"]"
+      },
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/app/stg/1726263001272-2024-09-13T21:30:01.272Z",
+    "artifact": ""
+  }
+}

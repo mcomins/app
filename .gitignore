@@ -1,0 +1,8 @@
+# Environment
+.env
+
+# Nuxt dev/build outputs
+.nuxt
+
+# Node Modules
+node_modules

@@ -1,0 +1,8 @@
+Resources:
+    ParameterHealthCheck:
+        Type: AWS::SSM::Parameter
+        Properties:
+            Name: health-check-enabled
+            Description: SSM Parameter for account health check
+            Type: String
+            Value: "true"

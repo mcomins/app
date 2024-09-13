@@ -1,0 +1,36 @@
+service: app
+configValidationMode: off
+frameworkVersion: "3"
+
+custom:
+    domainName: ${self:service}-${self:provider.stage}.${self:custom.hostedZone}
+    hostedZone: "matthewcomins.com"
+
+plugins:
+    - serverless-deployment-bucket
+    - serverless-build-client
+
+provider:
+    name: aws
+    runtime: nodejs20.x
+    architecture: arm64
+    logRetentionInDays: 14
+    region: us-east-1
+    stage: stg
+    stackName: ${self:service}-${self:provider.stage}
+
+    deploymentBucket:
+        name: ${self:service}-${self:provider.stage}-${self:provider.region}-deployment-bucket
+        serverSideEncryption: AES256
+
+    environment:
+        DOMAIN_NAME: ${self:custom.domainName}
+        HOSTED_ZONE: ${self:custom.hostedZone}
+
+    httpApi:
+        disableDefaultEndpoint: false
+        payload: "1.0"
+
+    stackTags:
+        SERVICE: ${self:service}
+        STAGE: ${self:provider.stage}

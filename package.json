@@ -1,0 +1,39 @@
+{
+	"name": "app",
+	"description": "An SSR Nuxt application deployed to AWS Lambda",
+	"version": "1.0.0",
+	"author": "Matt Comins",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mcomins/app.git"
+	},
+	"engines": {
+		"node": ">=20.17.0",
+		"npm": "10.8.2"
+	},
+	"scripts": {
+		"dev:server": "cross-env NODE_ENV=development nodemon --max-old-space-size=8192 -r dotenv/config src/local.js",
+		"dev": "cross-env NODE_ENV=production nuxt",
+		"dev:env": "sls client build --command 'node ./scripts/collect-env.js'",
+		"build": "nuxt build",
+		"generate": "nuxt generate",
+		"start": "nuxt start"
+	},
+	"dependencies": {
+		"@aws-sdk/client-ssm": "^3.651.1",
+		"@nuxt/components": "^2.2.1",
+		"@nuxtjs/axios": "^5.13.6",
+		"express": "^4.21.0",
+		"nuxt": "2.18.1"
+	},
+	"devDependencies": {
+		"consola": "^3.2.3",
+		"cross-env": "^7.0.3",
+		"dotenv": "^16.4.5",
+		"js-yaml": "^4.1.0",
+		"nodemon": "^3.1.4",
+		"serverless": "3.34.0",
+		"serverless-build-client": "^2.5.0",
+		"serverless-deployment-bucket": "^1.6.0"
+	}
+}

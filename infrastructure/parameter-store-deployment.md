@@ -1,6 +1,6 @@
-### GLOBAL ###
+### REGIONAL: US-EAST-1 ###
 
-> deploy parameters to Parameter Store
+> deploy Parameter Store resources
 ```
 aws cloudformation deploy --stack-name app-parameters \
     --template-file infrastructure/parameter-store.yml \

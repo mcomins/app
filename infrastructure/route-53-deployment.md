@@ -1,6 +1,6 @@
 ### REGIONAL: US-EAST-1 ###
 
-> deploy parameters to Parameter Store
+> deploy Route 53 resources
 ```
 aws cloudformation deploy --stack-name app-route-53 \
     --template-file infrastructure/route-53.yml \

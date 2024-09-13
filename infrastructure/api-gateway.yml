@@ -1,0 +1,9 @@
+Resources:
+    APIGatewayDomainNameRegional:
+        Type: AWS::ApiGatewayV2::DomainName
+        Properties:
+            DomainName: ${self:custom.domainNameRegional}
+            DomainNameConfigurations:
+                - EndpointType: REGIONAL
+                  CertificateArn: >-
+                      arn:aws:acm:us-east-1:652325596088:certificate/a75cb789-3935-46cd-91ec-5fb37d59fa9b

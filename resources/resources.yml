@@ -1,0 +1,46 @@
+Resources:
+    APIGatewayDomainName:
+        Type: AWS::ApiGatewayV2::DomainName
+        Properties:
+            DomainName: ${self:custom.domainName}
+            DomainNameConfigurations:
+                - EndpointType: REGIONAL
+                  CertificateArn: >-
+                      arn:aws:acm:us-east-1:652325596088:certificate/a75cb789-3935-46cd-91ec-5fb37d59fa9b
+
+    APIGatewayDomainMapping:
+        Type: "AWS::ApiGatewayV2::ApiMapping"
+        Properties:
+            DomainName: ${self:custom.domainName}
+            ApiId: !Ref HttpApi
+            Stage: !Ref HttpApiStage
+        DependsOn:
+            - APIGatewayDomainName
+            - HttpApiStage
+
+    Route53HealthCheck:
+        Type: AWS::Route53::HealthCheck
+        Properties:
+            HealthCheckConfig:
+                Port: 443
+                Type: HTTPS
+                ResourcePath: "/health"
+                FullyQualifiedDomainName: ${self:custom.domainName}
+                RequestInterval: 30
+                FailureThreshold: 1
+            HealthCheckTags:
+                - Key: Name
+                  Value: ${self:service}-${self:provider.stage}
+
+    Route53RecordSet:
+        Type: AWS::Route53::RecordSet
+        Properties:
+            HealthCheckId: !Ref Route53HealthCheck
+            HostedZoneName: "${self:custom.hostedZone}."
+            Name: ${self:custom.domainName}
+            Region: ${self:provider.region}
+            ResourceRecords:
+                - !GetAtt APIGatewayDomainName.RegionalDomainName
+            SetIdentifier: ${self:service}-${self:provider.stage}-latency
+            TTL: 30
+            Type: CNAME

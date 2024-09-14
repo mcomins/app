@@ -1,6 +1,0 @@
-app:
-    handler: src/index.handler
-    memorySize: 2048
-    timeout: 30
-    events:
-        - httpApi: "*"

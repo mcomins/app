@@ -21,6 +21,19 @@
         "disableDefaultEndpoint": false,
         "payload": "1.0"
       },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ssm:GetParameter"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      },
       "stackTags": {
         "SERVICE": "app",
         "STAGE": "stg"
@@ -33,16 +46,353 @@
       "compiledCloudFormationTemplate": {
         "AWSTemplateFormatVersion": "2010-09-09",
         "Description": "The AWS CloudFormation template for this Serverless application",
-        "Resources": {},
+        "Resources": {
+          "AppLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/app-stg-app",
+              "RetentionInDays": 14
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "app",
+                        "stg",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/app-stg*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/app-stg*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iam\"][\"role\"][\"statements\"][0]"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "app",
+                    "stg",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "AppLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "app-stg-us-east-1-deployment-bucket",
+                "S3Key": "serverless/app/stg/1726276182204-2024-09-14T01:09:42.204Z/app.zip"
+              },
+              "Handler": "src/index.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "app-stg-app",
+              "MemorySize": 2048,
+              "Timeout": 30,
+              "Architectures": [
+                "arm64"
+              ],
+              "Environment": {
+                "Variables": {
+                  "DOMAIN_NAME": "app-stg.matthewcomins.com",
+                  "HOSTED_ZONE": "matthewcomins.com"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "AppLogGroup"
+            ]
+          },
+          "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AppLambdaFunction"
+              },
+              "CodeSha256": "dQc9PAf1qyH/PQyGq0Vi3rEIlGJEOcuCeS9m32zyM6M="
+            }
+          },
+          "HttpApi": {
+            "Type": "AWS::ApiGatewayV2::Api",
+            "Properties": {
+              "Name": "stg-app",
+              "ProtocolType": "HTTP",
+              "DisableExecuteApiEndpoint": false
+            }
+          },
+          "HttpApiStage": {
+            "Type": "AWS::ApiGatewayV2::Stage",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "StageName": "$default",
+              "AutoDeploy": true,
+              "DefaultRouteSettings": {
+                "DetailedMetricsEnabled": false
+              }
+            }
+          },
+          "AppLambdaPermissionHttpApi": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "AppLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "HttpApi"
+                    },
+                    "/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "HttpApiIntegrationApp": {
+            "Type": "AWS::ApiGatewayV2::Integration",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "IntegrationType": "AWS_PROXY",
+              "IntegrationUri": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AppLambdaPermissionHttpApi\"][\"Properties\"][\"FunctionName\"]"
+              },
+              "PayloadFormatVersion": "1.0",
+              "TimeoutInMillis": 30000
+            }
+          },
+          "HttpApiRouteDefault": {
+            "Type": "AWS::ApiGatewayV2::Route",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "RouteKey": "$default",
+              "Target": {
+                "Fn::Join": [
+                  "/",
+                  [
+                    "integrations",
+                    {
+                      "Ref": "HttpApiIntegrationApp"
+                    }
+                  ]
+                ]
+              }
+            },
+            "DependsOn": "HttpApiIntegrationApp"
+          },
+          "APIGatewayDomainName": {
+            "Type": "AWS::ApiGatewayV2::DomainName",
+            "Properties": {
+              "DomainName": "app-stg.matthewcomins.com",
+              "DomainNameConfigurations": [
+                {
+                  "EndpointType": "REGIONAL",
+                  "CertificateArn": "arn:aws:acm:us-east-1:652325596088:certificate/a75cb789-3935-46cd-91ec-5fb37d59fa9b"
+                }
+              ]
+            }
+          },
+          "APIGatewayDomainMapping": {
+            "Type": "AWS::ApiGatewayV2::ApiMapping",
+            "Properties": {
+              "DomainName": "app-stg.matthewcomins.com",
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "Stage": {
+                "Ref": "HttpApiStage"
+              }
+            },
+            "DependsOn": [
+              "APIGatewayDomainName",
+              "HttpApiStage"
+            ]
+          },
+          "Route53HealthCheck": {
+            "Type": "AWS::Route53::HealthCheck",
+            "Properties": {
+              "HealthCheckConfig": {
+                "Port": 443,
+                "Type": "HTTPS",
+                "ResourcePath": "/health",
+                "FullyQualifiedDomainName": "app-stg.matthewcomins.com",
+                "RequestInterval": 30,
+                "FailureThreshold": 1
+              },
+              "HealthCheckTags": [
+                {
+                  "Key": "Name",
+                  "Value": "app-stg"
+                }
+              ]
+            }
+          },
+          "Route53RecordSet": {
+            "Type": "AWS::Route53::RecordSet",
+            "Properties": {
+              "HealthCheckId": {
+                "Ref": "Route53HealthCheck"
+              },
+              "HostedZoneName": "matthewcomins.com.",
+              "Name": "app-stg.matthewcomins.com",
+              "Region": "us-east-1",
+              "ResourceRecords": [
+                {
+                  "Fn::GetAtt": [
+                    "APIGatewayDomainName",
+                    "RegionalDomainName"
+                  ]
+                }
+              ],
+              "SetIdentifier": "app-stg-latency",
+              "TTL": 30,
+              "Type": "CNAME"
+            }
+          }
+        },
         "Outputs": {
           "ServerlessDeploymentBucketName": {
             "Value": "app-stg-us-east-1-deployment-bucket",
             "Export": {
               "Name": "sls-app-stg-ServerlessDeploymentBucketName"
             }
+          },
+          "AppLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc"
+            },
+            "Export": {
+              "Name": "sls-app-stg-AppLambdaFunctionQualifiedArn"
+            }
+          },
+          "HttpApiId": {
+            "Description": "Id of the HTTP API",
+            "Value": {
+              "Ref": "HttpApi"
+            },
+            "Export": {
+              "Name": "sls-app-stg-HttpApiId"
+            }
+          },
+          "HttpApiUrl": {
+            "Description": "URL of the HTTP API",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "HttpApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  }
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-app-stg-HttpApiUrl"
+            }
           }
         }
-      }
+      },
+      "vpc": {}
     },
     "custom": {
       "domainName": "app-stg.matthewcomins.com",
@@ -51,10 +401,103 @@
     },
     "plugins": [
       "serverless-deployment-bucket",
-      "serverless-build-client"
+      "serverless-build-client",
+      "serverless-plugin-common-excludes"
     ],
     "pluginsData": {},
-    "functions": {},
+    "functions": {
+      "app": {
+        "handler": "src/index.handler",
+        "memorySize": 2048,
+        "timeout": 30,
+        "events": [
+          {
+            "httpApi": "*",
+            "resolvedMethod": "ANY"
+          }
+        ],
+        "name": "app-stg-app",
+        "package": {},
+        "memory": 2048,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc"
+      }
+    },
+    "resources": {
+      "Resources": {
+        "APIGatewayDomainName": {
+          "Type": "AWS::ApiGatewayV2::DomainName",
+          "Properties": {
+            "DomainName": "app-stg.matthewcomins.com",
+            "DomainNameConfigurations": [
+              {
+                "EndpointType": "REGIONAL",
+                "CertificateArn": "arn:aws:acm:us-east-1:652325596088:certificate/a75cb789-3935-46cd-91ec-5fb37d59fa9b"
+              }
+            ]
+          }
+        },
+        "APIGatewayDomainMapping": {
+          "Type": "AWS::ApiGatewayV2::ApiMapping",
+          "Properties": {
+            "DomainName": "app-stg.matthewcomins.com",
+            "ApiId": {
+              "Ref": "HttpApi"
+            },
+            "Stage": {
+              "Ref": "HttpApiStage"
+            }
+          },
+          "DependsOn": [
+            "APIGatewayDomainName",
+            "HttpApiStage"
+          ]
+        },
+        "Route53HealthCheck": {
+          "Type": "AWS::Route53::HealthCheck",
+          "Properties": {
+            "HealthCheckConfig": {
+              "Port": 443,
+              "Type": "HTTPS",
+              "ResourcePath": "/health",
+              "FullyQualifiedDomainName": "app-stg.matthewcomins.com",
+              "RequestInterval": 30,
+              "FailureThreshold": 1
+            },
+            "HealthCheckTags": [
+              {
+                "Key": "Name",
+                "Value": "app-stg"
+              }
+            ]
+          }
+        },
+        "Route53RecordSet": {
+          "Type": "AWS::Route53::RecordSet",
+          "Properties": {
+            "HealthCheckId": {
+              "Ref": "Route53HealthCheck"
+            },
+            "HostedZoneName": "matthewcomins.com.",
+            "Name": "app-stg.matthewcomins.com",
+            "Region": "us-east-1",
+            "ResourceRecords": [
+              {
+                "Fn::GetAtt": [
+                  "APIGatewayDomainName",
+                  "RegionalDomainName"
+                ]
+              }
+            ],
+            "SetIdentifier": "app-stg-latency",
+            "TTL": 30,
+            "Type": "CNAME"
+          }
+        }
+      },
+      "Outputs": {}
+    },
     "configValidationMode": "off",
     "serviceFilename": "serverless.yml",
     "initialServerlessConfig": {
@@ -69,13 +512,20 @@
       },
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
       }
     },
     "layers": {},
-    "isDashboardMonitoringPreconfigured": false
+    "isDashboardMonitoringPreconfigured": false,
+    "artifact": "/Users/mcomins/Sites/app/.serverless/app.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/app/stg/1726263001272-2024-09-13T21:30:01.272Z",
-    "artifact": ""
+    "artifactDirectoryName": "serverless/app/stg/1726276182204-2024-09-14T01:09:42.204Z",
+    "artifact": "app.zip"
   }
 }

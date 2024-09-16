@@ -44,3 +44,23 @@ Resources:
             SetIdentifier: ${self:service}-${self:provider.stage}-latency
             TTL: 30
             Type: CNAME
+
+    S3Github:
+        Type: AWS::S3::Bucket
+        DeletionPolicy: Retain
+        Properties:
+            BucketName: ${self:service}-${self:provider.stage}-${self:provider.region}-github-bucket
+
+    S3GithubPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: !Ref S3Github
+            PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Sid: "PublicReadForGetBucketObjects"
+                      Effect: Allow
+                      Action:
+                          - "s3:GetObject"
+                      Resource: !GetAtt S3Github.Arn
+                      Principal: "*"

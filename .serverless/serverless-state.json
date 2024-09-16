@@ -140,7 +140,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "app-stg-us-east-1-deployment-bucket",
-                "S3Key": "serverless/app/stg/1726276182204-2024-09-14T01:09:42.204Z/app.zip"
+                "S3Key": "serverless/app/stg/1726503254510-2024-09-16T16:14:14.510Z/app.zip"
               },
               "Handler": "src/index.handler",
               "Runtime": "nodejs20.x",
@@ -167,14 +167,14 @@
               "AppLogGroup"
             ]
           },
-          "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc": {
+          "AppLambdaVersionO6lZuUSlzxWXy4WnafNtzzCNNL4TKyv6bpm81mME": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AppLambdaFunction"
               },
-              "CodeSha256": "dQc9PAf1qyH/PQyGq0Vi3rEIlGJEOcuCeS9m32zyM6M="
+              "CodeSha256": "SARmrwZGlK1+fcRzQlntmsn8fFAk0xgyWeziJj2mHCo="
             }
           },
           "HttpApi": {
@@ -338,6 +338,40 @@
               "TTL": 30,
               "Type": "CNAME"
             }
+          },
+          "S3Github": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "BucketName": "app-stg-us-east-1-github-bucket"
+            }
+          },
+          "S3GithubPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "S3Github"
+              },
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Sid": "PublicReadForGetBucketObjects",
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:GetObject"
+                    ],
+                    "Resource": {
+                      "Fn::GetAtt": [
+                        "S3Github",
+                        "Arn"
+                      ]
+                    },
+                    "Principal": "*"
+                  }
+                ]
+              }
+            }
           }
         },
         "Outputs": {
@@ -350,7 +384,7 @@
           "AppLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc"
+              "Ref": "AppLambdaVersionO6lZuUSlzxWXy4WnafNtzzCNNL4TKyv6bpm81mME"
             },
             "Export": {
               "Name": "sls-app-stg-AppLambdaFunctionQualifiedArn"
@@ -421,7 +455,7 @@
         "memory": 2048,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "AppLambdaVersionhAO8gyIUWhMTOxmv0WWTqZtM8dFY9mZHk4VnBv10iNc"
+        "versionLogicalId": "AppLambdaVersionO6lZuUSlzxWXy4WnafNtzzCNNL4TKyv6bpm81mME"
       }
     },
     "resources": {
@@ -494,6 +528,40 @@
             "TTL": 30,
             "Type": "CNAME"
           }
+        },
+        "S3Github": {
+          "Type": "AWS::S3::Bucket",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "BucketName": "app-stg-us-east-1-github-bucket"
+          }
+        },
+        "S3GithubPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "Bucket": {
+              "Ref": "S3Github"
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "PublicReadForGetBucketObjects",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "S3Github",
+                      "Arn"
+                    ]
+                  },
+                  "Principal": "*"
+                }
+              ]
+            }
+          }
         }
       },
       "Outputs": {}
@@ -525,7 +593,7 @@
     "artifact": "/Users/mcomins/Sites/app/.serverless/app.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/app/stg/1726276182204-2024-09-14T01:09:42.204Z",
+    "artifactDirectoryName": "serverless/app/stg/1726503254510-2024-09-16T16:14:14.510Z",
     "artifact": "app.zip"
   }
 }
